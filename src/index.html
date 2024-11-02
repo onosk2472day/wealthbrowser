@@ -1,0 +1,348 @@
+<!// index.html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Wealth Browser</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Roboto, sans-serif;
+      overflow: hidden;
+    }
+    
+    .toolbar {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      height: 48px;
+    }
+    
+    .url-bar {
+      flex: 1;
+      margin: 0 16px;
+      padding: 8px 16px;
+      border-radius: 24px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+    }
+    
+    .nav-button {
+      background: none;
+      border: none;
+      padding: 8px;
+      cursor: pointer;
+    }
+    
+    .nav-button svg {
+      width: 24px;
+      height: 24px;
+    }
+    
+    .tab-bar {
+      display: flex;
+      background: #f1f1f1;
+      padding: 8px 8px 0;
+      overflow-x: auto;
+      height: 40px;
+    }
+    
+    .tab {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      padding: 8px 16px;
+      margin-right: 4px;
+      cursor: pointer;
+      min-width: 120px;
+      max-width: 200px;
+      position: relative;
+    }
+    
+    .tab.active {
+      background: #fff;
+      border-bottom: none;
+    }
+    
+    .tab-title {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .close-tab {
+      margin-left: 8px;
+      opacity: 0.5;
+      border: none;
+      background: none;
+      padding: 2px;
+      cursor: pointer;
+    }
+    
+    .new-tab {
+      padding: 8px;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .webview-container {
+      position: relative;
+      height: calc(100vh - 96px);
+    }
+    
+    webview {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: none;
+    }
+    
+    webview.active {
+      display: block;
+    }
+    
+    .menu-panel {
+      position: absolute;
+      right: 8px;
+      top: 56px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: none;
+      z-index: 1000;
+    }
+    
+    .menu-panel.active {
+      display: block;
+    }
+    
+    .menu-item {
+      padding: 12px 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .menu-item:hover {
+      background: #f5f5f5;
+    }
+    
+    .bookmark-panel {
+      position: absolute;
+      left: 0;
+      top: 96px;
+      width: 250px;
+      background: white;
+      border-right: 1px solid #ddd;
+      height: calc(100vh - 96px);
+      display: none;
+      z-index: 900;
+    }
+    
+    .bookmark-panel.active {
+      display: block;
+    }
+    
+    .bookmark-item {
+      padding: 8px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .bookmark-item:hover {
+      background: #f5f5f5;
+    }
+    
+    .download-panel {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #ddd;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+    }
+    
+    .download-panel.active {
+      display: block;
+    }
+    
+    .download-item {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .progress-bar {
+      flex: 1;
+      height: 4px;
+      background: #eee;
+      border-radius: 2px;
+    }
+    
+    .progress {
+      height: 100%;
+      background: #1a73e8;
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+  </style>
+</head>
+<body>
+  <div class="tab-bar">
+    <button class="new-tab">
+      <img src="icons/add.svg" alt="New Tab">
+    </button>
+  </div>
+  
+  <div class="toolbar">
+    <button class="nav-button" id="back">
+      <img src="icons/back.svg" alt="Back">
+    </button>
+    <button class="nav-button" id="forward">
+      <img src="icons/forward.svg" alt="Forward">
+    </button>
+    <button class="nav-button" id="refresh">
+      <img src="icons/refresh.svg" alt="Refresh">
+    </button>
+    <input type="text" class="url-bar" id="urlBar" placeholder="Search or enter URL">
+    <button class="nav-button" id="bookmark">
+      <img src="icons/bookmark.svg" alt="Bookmark">
+    </button>
+    <button class="nav-button" id="menu">
+      <img src="icons/menu.svg" alt="Menu">
+    </button>
+  </div>
+  
+  <div class="webview-container"></div>
+  
+  <div class="menu-panel">
+    <div class="menu-item" id="showBookmarks">
+      <img src="icons/bookmarks.svg" alt="Bookmarks">
+      Bookmarks
+    </div>
+    <div class="menu-item" id="showHistory">
+      <img src="icons/history.svg" alt="History">
+      History
+    </div>
+    <div class="menu-item" id="showDownloads">
+      <img src="icons/download.svg" alt="Downloads">
+      Downloads
+    </div>
+    <div class="menu-item" id="settings">
+      <img src="icons/settings.svg" alt="Settings">
+      Settings
+    </div>
+  </div>
+  
+  <div class="bookmark-panel">
+    <div class="panel-header">
+      <h3>Bookmarks</h3>
+    </div>
+    <div class="bookmark-list"></div>
+  </div>
+  
+  <div class="download-panel">
+    <div class="panel-header">
+      <h3>Downloads</h3>
+    </div>
+    <div class="download-list"></div>
+  </div>
+
+  <script>
+    const Store = require('electron-store')
+    const store = new Store()
+    
+    // Initialize stored data
+    const bookmarks = store.get('bookmarks') || []
+    const history = store.get('history') || []
+    let downloads = []
+    let activeTabId = null
+    
+    // Tab management
+    function createTab(url = 'https://www.google.com') {
+      const tabId = Date.now().toString()
+      
+      // Create tab button
+      const tab = document.createElement('div')
+      tab.className = 'tab'
+      tab.dataset.tabId = tabId
+      tab.innerHTML = `
+        <span class="tab-title">New Tab</span>
+        <button class="close-tab">
+          <img src="icons/close.svg" alt="Close">
+        </button>
+      `
+      
+      // Create webview
+      const webview = document.createElement('webview')
+      webview.setAttribute('src', url)
+      webview.className = 'webview'
+      webview.dataset.tabId = tabId
+      
+      // Insert elements
+      document.querySelector('.new-tab').before(tab)
+      document.querySelector('.webview-container').appendChild(webview)
+      
+      // Set up event listeners
+      setupWebviewEvents(webview, tab)
+      
+      // Activate new tab
+      activateTab(tabId)
+      
+      return { tab, webview }
+    }
+    
+    function activateTab(tabId) {
+      // Deactivate current tab
+      document.querySelectorAll('.tab.active').forEach(t => t.classList.remove('active'))
+      document.querySelectorAll('webview.active').forEach(w => w.classList.remove('active'))
+      
+      // Activate new tab
+      const tab = document.querySelector(`.tab[data-tab-id="${tabId}"]`)
+      const webview = document.querySelector(`webview[data-tab-id="${tabId}"]`)
+      
+      if (tab && webview) {
+        tab.classList.add('active')
+        webview.classList.add('active')
+        activeTabId = tabId
+        urlBar.value = webview.getURL()
+      }
+    }
+    
+    function setupWebviewEvents(webview, tab) {
+      webview.addEventListener('page-title-updated', (e) => {
+        tab.querySelector('.tab-title').textContent = e.title
+      })
+      
+      webview.addEventListener('did-start-loading', () => {
+        refreshBtn.querySelector('img').src = 'icons/stop.svg'
+      })
+      
+      webview.addEventListener('did-stop-loading', () => {
+        refreshBtn.querySelector('img').src = 'icons/refresh.svg'
+        urlBar.value = webview.getURL()
+        
+        // Add to history
+        const historyEntry = {
+          title: webview.get
+		  <script src="androidBridge.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    AndroidBridge.init()
+  })
+</script>
